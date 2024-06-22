@@ -1,0 +1,3 @@
+
+Start to end:2.86
+number of anomalies 0

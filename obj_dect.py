@@ -21,18 +21,92 @@ from general import PATHS
 # DATASET_PATH = os.path.dirname("C:\\Users\\ADMIN\\Desktop\\AIC21-Track4-Anomaly-Detection_full\\AIC21-Track4-Anomaly-Detection\\")
 # MODEL_PATH = os.path.dirname('D:\\bi12year3\intern\ictlab\lmao\model\\')
 
-def check_dir(paths = PATHS["general"]):
-    newpath = [
-    paths + '\\results_train',
-    paths + '\\results_test'
-    ] 
-    for i in range(0, 2):
-        print(i)
-        if not os.path.exists(newpath[i]):
-            os.makedirs(newpath[i])
 
 def run_main(vid_no, mode: str = "train"):
+    if mode == "train":
+        print("*************************************************\nmode: TRAIN\n**********************************************\n")
+        folder_path = PATHS["dataset"] + '\\aic21-track4-train-data\\'
+        result_path = PATHS["general"] + f'results_train\\Train_Output_{vid_no}_anomalies.txt'
+    elif mode == "test":
+        print("############################################\nmode:test\n#######################################################\n")
+        folder_path = PATHS["dataset"] + '\\aic21-track4-test-data\\'
+        result_path = PATHS["general"] + f'results_test\\Test_Output_{vid_no}_anomalies.txt'
+    else:
+        folder_path = None
+        result_path = None
+
+    try:
+        video_path = folder_path + f'\\{vid_no}.mp4'
+        video_info = sv.VideoInfo.from_video_path(video_path= video_path)
     
+    except:
+        print("#####################\nICORRECT MODE\n**************************")
+
+    try:
+        torch.cuda.set_device(0) # Set to your desired GPU number
+    except:
+        print("\nNo cuda or incorrectly installed\n")
+
+    # model = RTDETR(model_path + '\\rtdetr-l.pt')
+    model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
+
+    fps = video_info.fps
+
+    frame_generator = sv.get_video_frames_generator(video_path)
+
+    # tracking
+    byte_track = sv.ByteTrack(frame_rate= fps, lost_track_buffer= 120)
+
+    text_file = open(result_path, 'w') 
+
+    vehicle_id = OrderedDict()
+
+    anomalies = {}
+    frame_no = 0
+
+    start = time.time()
+    for frame in frame_generator:
+        
+        timer = frame_no/fps
+        timer = int(round(timer, 0))
+        print(f"vid no: {vid_no}")
+        print(frame_no)
+        print(timer)
+        if frame_no >= 0:
+        # if timer > 0:
+            vid_time = [frame_no, timer]
+            
+            result = model.predict(frame)[0]
+            detections = sv.Detections.from_ultralytics(result)
+            detections = byte_track.update_with_detections(detections= detections)
+            if frame_no % CONFIG['frame_skip'] == 0:
+                vehicle_id = add_check(detections, vehicle_id, anomalies, vid_time)
+
+            anomalies, vehicle_id = check_life(vehicle_id, anomalies, vid_time)
+            print(anomalies)
+            frame_no += 1
+
+        else:
+            pass
+    print(anomalies)
+
+    end = time.time()
+    timer = end - start
+    timer = round(timer, 2) 
+
+
+    for i in anomalies.items():
+        text_file.write(f"{str(i)}\n")
+
+    text_file.write(f"\nStart to end:{timer}")
+    text_file.write(f"\nnumber of anomalies {str(len(anomalies))}")
+
+    text_file.close()
+    print('done')
+
+
+
+def run_main_img(vid_no, mode: str = "train"):
     if mode == "train":
         print("*************************************************\nmode: TRAIN\n**********************************************\n")
         folder_path = PATHS["dataset"] + '\\aic21-track4-train-data\\'
@@ -181,4 +255,4 @@ def run_main(vid_no, mode: str = "train"):
     print('done')
 
 # check_dir()
-# run_main(33, "test")
+run_main_img(33, "train")

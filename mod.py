@@ -19,9 +19,21 @@ from supervision.draw.color import Color, ColorPalette
 CONFIG = {
     'error' : 1,
     'life_time' : 30,
+    'frame_skip' : 2,
+    'anomaly_range': 50,
+    'anomaly_min_time': 20,
     'tracker_memo' : 1000,
-    'frame_skip' : 2
 }
+
+def check_dir(paths = PATHS["general"]):
+    newpath = [
+    paths + '\\results_train',
+    paths + '\\results_test'
+    ] 
+    for i in range(0, 2):
+        print(i)
+        if not os.path.exists(newpath[i]):
+            os.makedirs(newpath[i])
 
 class CustomBoundingBoxAnnotator(sv.BoundingBoxAnnotator):
     def __init__(
@@ -96,17 +108,13 @@ def custom_resolve_color(
     return get_color_by_index(color= color, idx= idx)
 
 def coor_check(old_coor, new_coor, errors = CONFIG["error"]):
-    check = 0
-    for i in range(len(old_coor)):
-        if isclose(old_coor[i], new_coor[i], abs_tol= errors):
-            check += 1
-    return check == 4
+    return all(abs(c1 - c2) <= errors for c1, c2 in zip(old_coor, new_coor))
 
 def update_checker(tracker_id: dict, Id, new_coor, new_start):
     old_coor, life, old_start, end = tracker_id[Id]
     if coor_check(old_coor, new_coor):
         life += 1
-        tracker_id.update({Id: [new_coor, life, old_start, end]})
+        tracker_id.update({Id: [new_coor, life, new_start, end]})
         return tracker_id
     else:
         life = 0
@@ -188,22 +196,26 @@ def sort_ano(anomailes: dict):
 
     for ano_id1 in anomailes.keys():
         if ano_id1 in anomailes_cop.keys():
+            temp = []
             coors1 = anomailes[ano_id1][0]
             start1 = anomailes[ano_id1][-2]
             end1 = anomailes[ano_id1][-1]
-            ano[ano_id1] = [coors1, start1, end1]
-            temp = []
-            for ano_id2 in anomailes_cop.keys():
-                if ano_id1 == ano_id2:
-                    pass
-                else:
-                    coors2 = anomailes[ano_id2][0]
-                    start2 = anomailes[ano_id2][-2]
-                    end2 = anomailes[ano_id2][-1]
+            if end1[1] - start1[1] >= CONFIG['anomaly_min_time']:
+                ano[ano_id1] = [coors1, start1, end1]
+                for ano_id2 in anomailes_cop.keys():
+                    if ano_id1 == ano_id2:
+                        pass
+                    else:
+                        coors2 = anomailes[ano_id2][0]
+                        start2 = anomailes[ano_id2][-2]
+                        end2 = anomailes[ano_id2][-1]
 
-                    if coor_check(coors1, coors2, errors= CONFIG["error"] + 2):
-                        ano[ano_id1] = [coors1, start1, end2]
-                        temp.append(ano_id2)
+                        if coor_check(coors1, coors2, errors= CONFIG["error"] + CONFIG['anomaly_range']):
+                            ano[ano_id1] = [coors1, start1, end2]
+                            temp.append(ano_id2)
+            else:
+                pass
+
             for i in temp:
                 anomailes_cop.pop(i)  
     return ano
@@ -232,7 +244,6 @@ def display_ano(vid_no, ano_data, mode):
     except:
         print("#####################\nICORRECT MODE\n**************************")
 
-    # cap = cv2.VideoCapture(f"C:\\Users\\ADMIN\\Desktop\\AIC21-Track4-Anomaly-Detection_full\\AIC21-Track4-Anomaly-Detection\\aic21-track4-train-data\\{vid_no}.mp4")
     x1, x2, y1, y2 = coors
     
     # Check if camera opened successfully
@@ -256,8 +267,8 @@ def display_ano(vid_no, ano_data, mode):
         if ret == True:
             # Display the resulting frame
             frame = cv2.rectangle(frame, 
-                                pt1=(x1, x2), 
-                                pt2= (y1, y2),  
+                                pt1=(x1 - CONFIG['anomaly_range'], x2 - CONFIG['anomaly_range']), 
+                                pt2= (y1 + CONFIG['anomaly_range'], y2 + CONFIG['anomaly_range']),  
                                 color= (0, 0, 255), thickness= 2)
             
             frame = cv2.putText(frame, f'time: {timer}', 
@@ -276,13 +287,11 @@ def display_ano(vid_no, ano_data, mode):
         # Break the loop
         # else: 
         #   break
-
-
-    # When everything done, release the video capture object
     cap.release()
 
     # Closes all the frames
     cv2.destroyAllWindows()
+
 
 def process_ano(vid_no, mode):
     return sort_ano(anomailes= read_anomalies(vid_no, mode))

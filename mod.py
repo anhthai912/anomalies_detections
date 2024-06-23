@@ -126,7 +126,7 @@ def update_checker(tracker_id: dict, Id, new_coor, new_start):
         tracker_id[Id] = [new_coor, life, new_start, end]
         return tracker_id
     
-def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_time: list):
+def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_time: list, tracker_memo= CONFIG['tracker_memo']):
     vehi_cop = vehicle_id.copy()
     for tracker_id, coors in zip(detections.tracker_id, detections.xyxy):
         coors = list(coors)
@@ -134,7 +134,7 @@ def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_tim
             coors[i] = int(coors[i])
         if tracker_id not in vehicle_id:
             vehi_cop[tracker_id]= [coors, 0, vid_time, vid_time]
-            if len(vehicle_id.items()) >= CONFIG["tracker_memo"]: #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            if len(vehicle_id.items()) >= tracker_memo: #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 temp = vehi_cop.popitem(last= False)
                 if temp[0] in anomalies.keys():
                     vehi_cop[temp[0]] = temp[1]
@@ -155,9 +155,9 @@ def add_anomaly(vehicle, anomalies: dict, ano_time):
         
     return ano
 
-def check_life(tracker_id:dict, anomalies: dict, ano_time):
+def check_life(tracker_id:dict, anomalies: dict, ano_time, life_time = CONFIG['life_time']):
     for life in tracker_id.items():
-        if int(life[1][1]) > CONFIG["life_time"]:
+        if int(life[1][1]) > life_time:
             anomalies = add_anomaly(life, anomalies, ano_time)
     return anomalies, tracker_id
 
@@ -198,7 +198,7 @@ def read_anomalies(vid_no, mode, paths):
     return ano
 
 
-def sort_ano(anomalies: dict):
+def sort_ano(anomalies: dict, anomaly_range= CONFIG['anomaly_range'], anomaly_min_time= CONFIG['anomaly_min_time']):
     merged_data = {}
     visited_keys = set()
 
@@ -214,7 +214,7 @@ def sort_ano(anomalies: dict):
                 continue
 
             coords2, trash2, start2, end2 = value2
-            if coor_check(coords1, coords2, errors= CONFIG['error'] + CONFIG['anomaly_range']):
+            if coor_check(coords1, coords2, errors= CONFIG['error'] + anomaly_range):
                 merged_start = min(merged_start, start2)
                 merged_end = max(merged_end, end2)
                 visited_keys.add(key2)
@@ -222,7 +222,7 @@ def sort_ano(anomalies: dict):
         merged_data[key1] = [coords1, merged_start, merged_end]
         visited_keys.add(key1)
     
-    filtered_data = {k: v for k, v in merged_data.items() if (v[2][1] - v[1][1]) >= CONFIG['anomaly_min_time']}
+    filtered_data = {k: v for k, v in merged_data.items() if (v[2][1] - v[1][1]) >= anomaly_min_time}
     
     return filtered_data
 
@@ -235,7 +235,7 @@ def get_ano_info(anomailes: dict, id):
     return coors, start, end
 
 
-def display_ano(vid_no, ano_data, mode): 
+def display_ano(vid_no, ano_data, mode, anomaly_range= CONFIG['anomaly_range']): 
     coors, start, end = ano_data
 
     if mode == "train":
@@ -273,8 +273,8 @@ def display_ano(vid_no, ano_data, mode):
         if ret == True:
             # Display the resulting frame
             frame = cv2.rectangle(frame, 
-                                pt1=(x1 - CONFIG['anomaly_range'], x2 - CONFIG['anomaly_range']), 
-                                pt2= (y1 + CONFIG['anomaly_range'], y2 + CONFIG['anomaly_range']),  
+                                pt1=(x1 - anomaly_range, x2 - anomaly_range), 
+                                pt2= (y1 + anomaly_range, y2 + anomaly_range),  
                                 color= (0, 0, 255), thickness= 2)
             
             frame = cv2.putText(frame, f'time: {timer}', 
@@ -299,14 +299,18 @@ def display_ano(vid_no, ano_data, mode):
     cv2.destroyAllWindows()
 
 
-def process_ano(vid_no, mode, paths = PATHS['general']):
-    return sort_ano(read_anomalies(vid_no, mode, paths))
+def process_ano(vid_no, mode, paths = PATHS['general'], 
+                anomaly_range= CONFIG['anomaly_range'], 
+                anomaly_min_time = CONFIG['anomaly_min_time']):
+    return sort_ano(anomalies= read_anomalies(vid_no, mode, paths), 
+                    anomaly_range= anomaly_range, 
+                    anomaly_min_time= anomaly_min_time)
 
-def play_ano(vid_no, mode, sorted_ano: dict):
+def play_ano(vid_no, mode, sorted_ano: dict, anomaly_range = CONFIG['anomaly_range']):
     print("Number of anomalies: ", len(sorted_ano.keys()) )
     for i, ano_id in enumerate(sorted_ano.items()):
         print(f"Anomaly {i+1}")
         print(ano_id)
-        display_ano(vid_no, get_ano_info(sorted_ano, ano_id[0]), mode)
+        display_ano(vid_no, get_ano_info(sorted_ano, ano_id[0]), mode, anomaly_range= anomaly_range)
 
 # play_ano(vid_no, process_ano(vid_no))

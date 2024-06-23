@@ -246,4 +246,4 @@ def run_main_img(vid_no, mode: str = "train", confident= 0.5):
     print('done')
 
 # check_dir()
-# run_main_img(23, "train")
+run_main_img(23, "train")

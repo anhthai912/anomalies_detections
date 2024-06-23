@@ -5,7 +5,7 @@ import numpy as np
 import supervision as sv
 import os
 
-from general import PATHS
+
 from supervision.annotators.base import ImageType
 from supervision.annotators.utils import (
     ColorLookup,
@@ -15,13 +15,18 @@ from supervision.annotators.utils import (
 from supervision.detection.core import Detections
 from supervision.draw.color import Color, ColorPalette
 
+PATHS = {
+    'general': "D:\\bi12year3\intern\ictlab\imgonnacrylmao\\", #folder path
+    'dataset' : "C:\\Users\\ADMIN\\Desktop\\AIC21-Track4-Anomaly-Detection_full\\AIC21-Track4-Anomaly-Detection\\", #dataset path
+    'read_slave' : "D:\\bi12year3\intern\gpu_slaves\\"
+}
 
 CONFIG = {
     'error' : 1,
     'life_time' : 30,
     'frame_skip' : 2,
-    'anomaly_range': 50,
-    'anomaly_min_time': 20,
+    'anomaly_range': 20,
+    'anomaly_min_time': 30,
     'tracker_memo' : 1000,
 }
 
@@ -158,12 +163,12 @@ def check_life(tracker_id:dict, anomalies: dict, ano_time):
 
 # #############################################################
 
-def read_anomalies(vid_no, mode):
+def read_anomalies(vid_no, mode, paths):
 #   data_path = os.path.dirname(data_path)
     if mode == "train":
-        file_path = PATHS['general'] + f"results_train\\Train_Output_{vid_no}_anomalies.txt"
+        file_path = paths + f"results_train\\Train_Output_{vid_no}_anomalies.txt"
     elif mode == "test":
-        file_path = PATHS["general"] + f'results_test\\Test_Output_{vid_no}_anomalies.txt'
+        file_path = paths + f'results_test\\Test_Output_{vid_no}_anomalies.txt'
     else:
         file_path = None
 
@@ -187,38 +192,39 @@ def read_anomalies(vid_no, mode):
         
         # Assign the key-value pair to the dictionary
         ano[key] = value
+
+    text_file.close()
+
     return ano
 
 
-def sort_ano(anomailes: dict):
-    ano = {}
-    anomailes_cop = anomailes.copy()
+def sort_ano(anomalies: dict):
+    merged_data = {}
+    visited_keys = set()
 
-    for ano_id1 in anomailes.keys():
-        if ano_id1 in anomailes_cop.keys():
-            temp = []
-            coors1 = anomailes[ano_id1][0]
-            start1 = anomailes[ano_id1][-2]
-            end1 = anomailes[ano_id1][-1]
-            if end1[1] - start1[1] >= CONFIG['anomaly_min_time']:
-                ano[ano_id1] = [coors1, start1, end1]
-                for ano_id2 in anomailes_cop.keys():
-                    if ano_id1 == ano_id2:
-                        pass
-                    else:
-                        coors2 = anomailes[ano_id2][0]
-                        start2 = anomailes[ano_id2][-2]
-                        end2 = anomailes[ano_id2][-1]
+    for key1, value1 in anomalies.items():
+        if key1 in visited_keys:
+            continue
 
-                        if coor_check(coors1, coors2, errors= CONFIG["error"] + CONFIG['anomaly_range']):
-                            ano[ano_id1] = [coors1, start1, end2]
-                            temp.append(ano_id2)
-            else:
-                pass
+        coords1, trash1, start1, end1 = value1
+        merged_start, merged_end = start1, end1
 
-            for i in temp:
-                anomailes_cop.pop(i)  
-    return ano
+        for key2, value2 in anomalies.items():
+            if key2 <= key1 or key2 in visited_keys:
+                continue
+
+            coords2, trash2, start2, end2 = value2
+            if coor_check(coords1, coords2, errors= CONFIG['error'] + CONFIG['anomaly_range']):
+                merged_start = min(merged_start, start2)
+                merged_end = max(merged_end, end2)
+                visited_keys.add(key2)
+
+        merged_data[key1] = [coords1, merged_start, merged_end]
+        visited_keys.add(key1)
+    
+    filtered_data = {k: v for k, v in merged_data.items() if (v[2][1] - v[1][1]) >= CONFIG['anomaly_min_time']}
+    
+    return filtered_data
 
 
 def get_ano_info(anomailes: dict, id):
@@ -293,8 +299,8 @@ def display_ano(vid_no, ano_data, mode):
     cv2.destroyAllWindows()
 
 
-def process_ano(vid_no, mode):
-    return sort_ano(anomailes= read_anomalies(vid_no, mode))
+def process_ano(vid_no, mode, paths = PATHS['general']):
+    return sort_ano(read_anomalies(vid_no, mode, paths))
 
 def play_ano(vid_no, mode, sorted_ano: dict):
     print("Number of anomalies: ", len(sorted_ano.keys()) )

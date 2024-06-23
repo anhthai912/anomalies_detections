@@ -6,8 +6,8 @@ from collections import OrderedDict
 import torch
 import numpy as np
 import time
-from mod import CustomBoundingBoxAnnotator, check_life, add_check, CONFIG
-from general import PATHS
+from mod import CustomBoundingBoxAnnotator, check_life, add_check, CONFIG, PATHS
+
 
 # PATHS = {
 #     'general': "D:\\bi12year3\intern\ictlab\imgonnacrylmao\\", #folder path

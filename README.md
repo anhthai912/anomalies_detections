@@ -1,6 +1,6 @@
 # anomalies_detections
 
-go to general.py
+go to mod.py
 change PATHS:
     general -> main folder path
     dataset -> dataset path

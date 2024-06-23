@@ -21,8 +21,9 @@ from mod import CustomBoundingBoxAnnotator, check_life, add_check, CONFIG, PATHS
 # DATASET_PATH = os.path.dirname("C:\\Users\\ADMIN\\Desktop\\AIC21-Track4-Anomaly-Detection_full\\AIC21-Track4-Anomaly-Detection\\")
 # MODEL_PATH = os.path.dirname('D:\\bi12year3\intern\ictlab\lmao\model\\')
 
+classes = [0, 1, 2, 3, 5, 7]
 
-def run_main(vid_no, mode: str = "train"):
+def run_main(vid_no, mode: str = "train", confident= 0.5):
     if mode == "train":
         print("*************************************************\nmode: TRAIN\n**********************************************\n")
         folder_path = PATHS["dataset"] + '\\aic21-track4-train-data\\'
@@ -49,7 +50,7 @@ def run_main(vid_no, mode: str = "train"):
 
     # model = RTDETR(model_path + '\\rtdetr-l.pt')
     model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
-
+    
     fps = video_info.fps
 
     frame_generator = sv.get_video_frames_generator(video_path)
@@ -75,8 +76,8 @@ def run_main(vid_no, mode: str = "train"):
         if frame_no >= 0:
         # if timer > 0:
             vid_time = [frame_no, timer]
-            
-            result = model.predict(frame)[0]
+
+            result = model.predict(frame, classes= classes, conf= confident)[0]
             detections = sv.Detections.from_ultralytics(result)
             detections = byte_track.update_with_detections(detections= detections)
             if frame_no % CONFIG['frame_skip'] == 0:
@@ -106,7 +107,7 @@ def run_main(vid_no, mode: str = "train"):
 
 
 
-def run_main_img(vid_no, mode: str = "train"):
+def run_main_img(vid_no, mode: str = "train", confident= 0.5):
     if mode == "train":
         print("*************************************************\nmode: TRAIN\n**********************************************\n")
         folder_path = PATHS["dataset"] + '\\aic21-track4-train-data\\'
@@ -150,16 +151,6 @@ def run_main_img(vid_no, mode: str = "train"):
     # tracking
     byte_track = sv.ByteTrack(frame_rate= fps, lost_track_buffer= 120)
 
-    # if mode == "train": 
-    #     text_file = open(PATHS["general"] + f'results_train\\Train_Output_{vid_no}_anomalies.txt', "w")
-    # elif mode == "test":
-    #     text_file = open(PATHS["general"] + f'results_test\\Test_Output_{vid_no}_anomalies.txt', 'w')
-    # else:
-    #     try:
-    #         text_file = open("dfds", "sadfds", 00, "sdfsdf") 
-    #     except:
-    #         print('\n Incorrect Mode \n')
-
     text_file = open(result_path, 'w') 
 
     vehicle_id = OrderedDict()
@@ -179,7 +170,7 @@ def run_main_img(vid_no, mode: str = "train"):
         # if timer > 0:
             vid_time = [frame_no, timer]
             
-            result = model.predict(frame)[0]
+            result = model.predict(frame, classes= classes, conf= confident)[0]
             detections = sv.Detections.from_ultralytics(result)
             detections = byte_track.update_with_detections(detections= detections)
             if frame_no % CONFIG['frame_skip'] == 0:
@@ -255,4 +246,4 @@ def run_main_img(vid_no, mode: str = "train"):
     print('done')
 
 # check_dir()
-run_main_img(33, "train")
+run_main_img(23, "train")

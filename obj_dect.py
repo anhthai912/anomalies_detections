@@ -19,7 +19,7 @@ from mod import CustomBoundingBoxAnnotator, check_life, add_check, CONFIG, PATHS
 
 classes = [0, 1, 2, 3, 5, 7]
 
-def run_main(vid_no, mode: str = "train", confident= 0.5, show= False,
+def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
              frame_skip= CONFIG['frame_skip'], 
              errors= CONFIG['error'], 
              life_time= CONFIG['life_time'], 

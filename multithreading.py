@@ -1,17 +1,19 @@
 # import threading
 import multiprocessing
 import os
-# from get_eval import read_prediction_data, get_true_data, kms, get_rmse_confmtrx, PATHS, TRUE_VID, run_weights
+from get_eval import read_prediction_data, get_true_data, kms, get_rmse_confmtrx, PATHS, TRUE_VID, run_weights
 
-def task(value_list,temp):
-    value = temp[0](temp[1][0], temp[1][1], temp[1][2], temp[1][3])
+def task(value_list,function, temp):
+    # value = temp[0](temp[1][0], temp[1][1], temp[1][2], temp[1][3])
+    range_idx, min_time_idx, mode, path = temp
+    value = function(range_idx, min_time_idx, mode, path)
     value_list.extend(value)
 
 def split_list(lst, chunk_size):
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
-def threader(function, iterations:list, args, batch_sz:int= 16):
+def threader(function, iterations:list, iter_index: int, weights, mode, batch_sz:int= 16, pre_path= PATHS['general']):
     manager = multiprocessing.Manager()
     
     # Create a shared list
@@ -20,12 +22,12 @@ def threader(function, iterations:list, args, batch_sz:int= 16):
     batch = split_list(iterations, batch_sz)
     threads = []
     print("number of processes: ", len(batch))
-    
+
     for idx,i in enumerate(batch):
-        # print(i)
-        temp_args = (args[0], i, args[2], args[3])
+        weights[iter_index] = i
+        temp_args = (weights[0], weights[1], mode, pre_path)
         # print(temp_args)
-        thread = multiprocessing.Process(target= task, args=(value_list, (function, temp_args)))
+        thread = multiprocessing.Process(target= task, args=(value_list, function, temp_args))
         threads.append(thread)
         thread.start()
 
@@ -42,9 +44,9 @@ if __name__ == '__main__':
     mode1 = "train"
     pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
 
-    super_args = (iter_range1, iter_min_time1, mode1, pre_path1)
+    super_args = [iter_range1, iter_min_time1, mode1]
 
-    result = threader(run_weights, iter_min_time1, super_args, 4)
+    result = threader(run_weights, iter_min_time1, 1, super_args, "train",4)
 
     print(max(result))
 

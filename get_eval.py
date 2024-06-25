@@ -101,11 +101,11 @@ def matching_result(y_pre, y_true, keys_true):
                     else: 
                         for i in range(add_val):
                             new_true.append([add_key, 0, 0])
-    print(len(new_true), len(y_pre))
-    print()
-    print(new_true)
-    print()
-    print(y_pre)
+    # print(len(new_true), len(y_pre))
+    # print()
+    # print(new_true)
+    # print()
+    # print(y_pre)
     return new_true
 
 def normalize(value, min_value=0, max_value=300):
@@ -181,9 +181,9 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
 # cm_display.plot()
 # plt.show()
 
-a = run_weights(list(range(1,31)), list(range(1,11)), "train")
+# a = run_weights(list(range(1,31)), list(range(1,11)), "train")
 
-print(max(a))
+# print(max(a))
 
 
 

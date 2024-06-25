@@ -9,7 +9,7 @@ iter_range = list(range(1,51))
 iter_min_time = list(range(1,201))
 errors = [0, 1, 2]
 life_time = list(range(15, 91, 15))
-frame_skip = [0, 1, 2, 3]
+frame_skip = [1, 2, 3]
 mode = "train"
 weights = [iter_range, iter_min_time]
 # data = [93,95, 97]
@@ -27,8 +27,8 @@ if __name__ == '__main__':
     for fr_skp in frame_skip:
         for error in errors:
             for life in life_time:
-
-                threader_main(data, mode, 5)
+                weights_idx = [fr_skp, error, life]
+                threader_main(data, mode, weights_idx, 5)
                 result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 40)
 
                 result = max(result_list)
@@ -44,5 +44,8 @@ if __name__ == '__main__':
     text_file.write(f"\nBest score:\n {max(training_data)}\n")
     text_file.write(f"\nnumber of anomalies {str(len(training_data))}")
 
-    text_file.close()
+    text_file.close() 
+
+    print("DONEZO@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print("Best weight:", max(training_data))
 

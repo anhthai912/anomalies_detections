@@ -11,8 +11,19 @@ def task_post(value_list,function, temp):
     value = function(range_idx, min_time_idx, mode, path)
     value_list.extend(value)
 
-def split_list(lst, chunk_size):
-    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+def split_list(input_list, n):
+    # Calculate the size of each chunk
+    avg_size = len(input_list) / n
+    # Initialize variables
+    out = []
+    last = 0.0
+    
+    while last < len(input_list):
+        # Create sublists with lengths rounded to the nearest integer
+        out.append(input_list[int(last):int(last + avg_size)])
+        last += avg_size
+        
+    return out
 
 
 def threader_post(function, iterations:list, iter_index: int, weights, mode, batch_sz:int= 16, pre_path= PATHS['general']):

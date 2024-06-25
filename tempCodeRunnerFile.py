@@ -1,3 +1,2 @@
-lmoa = threader(task1, list(range(1,11)), [[1,2,3], [7,9], [0,89,6,9]],5)
-
-print(lmoa)
+        # print("hello", lists[i][0])
+        # print("AAAAAAAAAAAAA", temp_list[i+1][0])

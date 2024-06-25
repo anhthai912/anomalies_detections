@@ -6,7 +6,8 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-TRUE_VID = [2, 9, 11, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+TRUE_VID = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+# print(len(TRUE_VID))
 
 def read_prediction_data(main_path, mode, select= []):
     result_path = f"{main_path}\\results_{mode}"
@@ -63,8 +64,12 @@ def kms(lists):
     keys = {}
     count = 1
     for i in range(len(lists)):
+        # print("hello", lists[i][0])
+        # print("AAAAAAAAAAAAA", temp_list[i+1][0])
         if lists[i][0] == temp_list[i+1][0]:
+            
             count += 1
+            # print("hello????", lists[i][0])
             keys[lists[i][0]] = count
         else:
             keys[lists[i][0]] = count
@@ -74,17 +79,17 @@ def kms(lists):
 
 def matching_result(y_pre, y_true, keys_true):
     new_true = []
-    # keys_true = kms(y_true)
+    keys_true = kms(y_true)
     keys_predict = kms(y_pre)
     keys_add = {}
 
     temp_y_true = y_true.copy()
     temp_y_true.append([99999, 0, 0])
-
+    # print("**************", keys_true)
     for key in keys_true.keys():
         if key in keys_predict.keys():
-            keys_add[key] = abs(keys_predict[key] - keys_true[key])
-
+            keys_add[key] = keys_predict[key] - keys_true[key]
+    # print("!!!!!!!!!!!!!!!!!!!", keys_add.items())
     for add_key, add_val in keys_add.items():
         for true_idx in range(len(temp_y_true) - 1):
             if y_true[true_idx][0] == add_key:
@@ -144,7 +149,9 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
     rmse_confmtrx_list = []
     
     const_pre = read_prediction_data(pre_path, mode, select)
+    
     const_true = get_true_data(dataset_path)
+    # print(const_true)
     const_true_keys = kms(const_true)
 
     for min_time_idx in iter_min_time:
@@ -165,6 +172,9 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
 # cm_display.plot()
 # plt.show()
 
+# a = run_weights(list(range(1,31)), list(range(1,11)), "train")
+
+# print(max(a))
 
 
 

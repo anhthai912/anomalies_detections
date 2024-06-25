@@ -51,6 +51,8 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
 
     # model = RTDETR(model_path + '\\rtdetr-l.pt')
     model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
+    cuda0 = torch.device('cuda:0')
+    model.to(cuda0)
 
     fps = video_info.fps
 
@@ -164,5 +166,7 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
     print('done')
 
 # check_dir()
-# run_main(23, "train")
-
+# for i in range(1, 101):
+#     run_main(i, "train", show= True)
+for i in range(-1):
+    print(i)

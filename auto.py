@@ -9,7 +9,7 @@ iter_range = list(range(1,51))
 iter_min_time = list(range(1,201))
 errors = [0, 1, 2]
 life_time = list(range(15, 91, 15))
-frame_skip = [1, 2, 3]
+frame_skip = [1, 2, 3, 4]
 mode = "train"
 weights = [iter_range, iter_min_time]
 # data = [93,95, 97]
@@ -24,19 +24,22 @@ if __name__ == '__main__':
     text_file = open(ouput_path, 'w')
     training_data = []
 
-    for fr_skp in frame_skip:
-        for error in errors:
-            for life in life_time:
-                weights_idx = [fr_skp, error, life]
-                threader_main(data, mode, weights_idx, 5)
-                result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 40)
+    # fr_skp = 1 #khang
+    # fr_skp = 2 #hminh
+    fr_skp = 3 #me
+    # fr_skp = 4 #bau
+    for error in errors:
+        for life in life_time:
+            weights_idx = [fr_skp, error, life]
+            threader_main(data, mode, weights_idx, 4)
+            result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 50)
 
-                result = max(result_list)
-                s4, [ano_range, min_time], rmse, cm = result
+            result = max(result_list)
+            s4, [ano_range, min_time], rmse, cm = result
 
-                w_data = [s4, [error, life, fr_skp, ano_range, min_time], rmse, cm]
+            w_data = [s4, [error, life, fr_skp, ano_range, min_time], rmse, cm]
 
-                training_data.append(w_data)
+            training_data.append(w_data)
 
     
     for i in training_data:

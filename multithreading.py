@@ -25,6 +25,8 @@ def split_list(input_list, n):
         
     return out
 
+def split_list_batch(lst, chunk_size):
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 def threader_post(function, iterations:list, iter_index: int, weights, mode, batch_sz:int= 16, pre_path= PATHS['general']):
     manager = multiprocessing.Manager()
@@ -32,7 +34,7 @@ def threader_post(function, iterations:list, iter_index: int, weights, mode, bat
     # Create a shared list
     value_list = manager.list()
 
-    batch = split_list(iterations, batch_sz)
+    batch = split_list_batch(iterations, batch_sz)
     threads = []
     print("number of processes: ", len(batch))
 
@@ -59,7 +61,7 @@ def task_main(data_list, temp_args, weights):
         run_main(i, mode, conf, show, frame_skip, errors, life_time)
     
 
-def threader_main(data_list:list, mode, weights= None, batch_sz:int= 16):
+def threader_main(data_list:list, mode, weights= None, batch_sz:int= 4):
     manager = multiprocessing.Manager()
     
     # Create a shared list
@@ -82,30 +84,56 @@ def threader_main(data_list:list, mode, weights= None, batch_sz:int= 16):
 
     return value_list
 
-
-
 if __name__ == '__main__':
     iter_range1 = list(range(1,31))
-    iter_min_time1 = list(range(1,11))
+    iter_min_time1 = list(range(1,18))
     mode1 = "train"
     # pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
     full_data = list(range(1,101))
 
 
-    super_args = [iter_range1, iter_min_time1, mode1]
+    super_args = [iter_range1, iter_min_time1]
 
-    threader_main(full_data, "train", batch_sz= 25)
+    # threader_main(TRUE_VID, "train", batch_sz= 4)
     print("***************************************")
 
-    # result = threader_post(run_weights, iter_min_time1, 1, super_args, "train",4)
+    result = threader_post(run_weights, iter_min_time1, 1, super_args, "train")
 
-    # print(max(result))
-
-
+    print(max(result))
 
 
 
 
+
+
+
+
+
+
+
+
+# Define the function to be executed by each process
+# def process_function(process_id):
+#     print(f"Process {process_id} is running")
+
+# # Number of processes
+# def lmeo():
+#     n = 5
+
+#     # Create a list to hold the process objects
+#     processes = []
+
+#     # Create and start n processes
+#     for i in range(n):
+#         process = multiprocessing.Process(target=process_function, args=(i,))
+#         processes.append(process)
+#         process.start()
+
+#     # Optionally, wait for all processes to finish
+#     for process in processes:
+#         process.join()
+
+#     print("All processes have finished execution")
 
 # def run_weights_threads(iter_range: list, iter_min_time: list, mode, batch_sz:int= 16, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
     

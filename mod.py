@@ -115,9 +115,9 @@ def custom_resolve_color(
 def coor_check(old_coor, new_coor, errors = CONFIG["error"]):
     return all(abs(c1 - c2) <= errors for c1, c2 in zip(old_coor, new_coor))
 
-def update_checker(tracker_id: dict, Id, new_coor, new_start):
+def update_checker(tracker_id: dict, Id, new_coor, new_start, errors = CONFIG["error"]):
     old_coor, life, old_start, end = tracker_id[Id]
-    if coor_check(old_coor, new_coor):
+    if coor_check(old_coor, new_coor, errors):#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         life += 1
         tracker_id.update({Id: [new_coor, life, new_start, end]})
         return tracker_id
@@ -126,7 +126,7 @@ def update_checker(tracker_id: dict, Id, new_coor, new_start):
         tracker_id[Id] = [new_coor, life, new_start, end]
         return tracker_id
     
-def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_time: list, tracker_memo= CONFIG['tracker_memo']):
+def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_time: list, tracker_memo= CONFIG['tracker_memo'], errors = CONFIG["error"]):
     vehi_cop = vehicle_id.copy()
     for tracker_id, coors in zip(detections.tracker_id, detections.xyxy):
         coors = list(coors)
@@ -139,7 +139,7 @@ def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_tim
                 if temp[0] in anomalies.keys():
                     vehi_cop[temp[0]] = temp[1]
         else:
-            vehi_cop = update_checker(vehi_cop, tracker_id, coors, vid_time)
+            vehi_cop = update_checker(vehi_cop, tracker_id, coors, vid_time, errors)#<<<<<<<<<<<<<<<<<<<<
     return vehi_cop
 
 def add_anomaly(vehicle, anomalies: dict, ano_time):
@@ -157,7 +157,7 @@ def add_anomaly(vehicle, anomalies: dict, ano_time):
 
 def check_life(tracker_id:dict, anomalies: dict, ano_time, life_time = CONFIG['life_time']):
     for life in tracker_id.items():
-        if int(life[1][1]) > life_time:
+        if int(life[1][1]) > life_time:#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             anomalies = add_anomaly(life, anomalies, ano_time)
     return anomalies, tracker_id
 

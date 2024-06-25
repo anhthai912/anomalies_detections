@@ -1,5 +1,3 @@
+lmoa = threader(task1, list(range(1,11)), [[1,2,3], [7,9], [0,89,6,9]],5)
 
-def normalize(value, min_value=0, max_value=300):
-    # Ensure value is within the given range
-    value = max(min_value, min(value, max_value))
-    
+print(lmoa)

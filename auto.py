@@ -2,7 +2,7 @@ from obj_dect import run_main
 from mod import PATHS, CONFIG
 from get_eval import run_weights
 from multithreading import threader_main, threader_post
-
+import time
 
 data = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
 iter_range = list(range(1,51))
@@ -20,6 +20,7 @@ weights = [iter_range, iter_min_time]
 if __name__ == '__main__':
     # for i in data:
     #     print(i)
+    start = time.time()
     ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
     
     training_data = []
@@ -41,9 +42,14 @@ if __name__ == '__main__':
 
             training_data.append(w_data)
 
+    end = time.time()
+    timer = end - start
+    timer = round(timer, 2) 
+
     text_file = open(ouput_path, 'w')
     for i in training_data:
         text_file.write(f"{str(i)}\n")
+    text_file.write(f"\nStart to end:{timer}")
     text_file.write(f"\nBest score:\n {max(training_data)}\n")
     text_file.write(f"\nnumber of anomalies {str(len(training_data))}")
 

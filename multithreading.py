@@ -54,7 +54,7 @@ def threader_main(data_list:list, mode, batch_sz:int= 16):
     print("number of processes: ", len(batch))
 
     for idx,i in enumerate(batch):
-        temp_args = (mode, 0.5, True)
+        temp_args = (mode, 0.5, False)
         # print(temp_args)
         thread = multiprocessing.Process(target= task_main, args=(i, temp_args))
         threads.append(thread)

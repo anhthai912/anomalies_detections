@@ -2,8 +2,9 @@
 import multiprocessing
 import os
 from get_eval import read_prediction_data, get_true_data, kms, get_rmse_confmtrx, PATHS, TRUE_VID, run_weights
+from obj_dect import run_main
 
-def task(value_list,function, temp):
+def task_post(value_list,function, temp):
     # value = temp[0](temp[1][0], temp[1][1], temp[1][2], temp[1][3])
     range_idx, min_time_idx, mode, path = temp
     value = function(range_idx, min_time_idx, mode, path)
@@ -13,7 +14,7 @@ def split_list(lst, chunk_size):
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
-def threader(function, iterations:list, iter_index: int, weights, mode, batch_sz:int= 16, pre_path= PATHS['general']):
+def threader_post(function, iterations:list, iter_index: int, weights, mode, batch_sz:int= 16, pre_path= PATHS['general']):
     manager = multiprocessing.Manager()
     
     # Create a shared list
@@ -27,7 +28,35 @@ def threader(function, iterations:list, iter_index: int, weights, mode, batch_sz
         weights[iter_index] = i
         temp_args = (weights[0], weights[1], mode, pre_path)
         # print(temp_args)
-        thread = multiprocessing.Process(target= task, args=(value_list, function, temp_args))
+        thread = multiprocessing.Process(target= task_post, args=(value_list, function, temp_args))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    return value_list
+
+def task_main(data_list, temp_args):
+    mode, conf, show = temp_args
+    for i in data_list:
+        run_main(i, mode, conf, show)
+    
+
+def threader_main(data_list:list, mode, batch_sz:int= 16):
+    manager = multiprocessing.Manager()
+    
+    # Create a shared list
+    value_list = manager.list()
+
+    batch = split_list(data_list, batch_sz)
+    threads = []
+    print("number of processes: ", len(batch))
+
+    for idx,i in enumerate(batch):
+        temp_args = (mode, 0.5, True)
+        # print(temp_args)
+        thread = multiprocessing.Process(target= task_main, args=(i, temp_args))
         threads.append(thread)
         thread.start()
 
@@ -42,13 +71,17 @@ if __name__ == '__main__':
     iter_range1 = list(range(1,31))
     iter_min_time1 = list(range(1,11))
     mode1 = "train"
-    pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
+    # pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
+    full_data = list(range(1,101))
 
     super_args = [iter_range1, iter_min_time1, mode1]
 
-    result = threader(run_weights, iter_min_time1, 1, super_args, "train",4)
+    threader_main(full_data, "train", 25)
+    print("***************************************")
 
-    print(max(result))
+    # result = threader_post(run_weights, iter_min_time1, 1, super_args, "train",4)
+
+    # print(max(result))
 
 
 

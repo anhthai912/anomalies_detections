@@ -95,8 +95,17 @@ def matching_result(y_pre, y_true, keys_true):
             if y_true[true_idx][0] == add_key:
                 new_true.append(y_true[true_idx])
                 if y_true[true_idx][0] != temp_y_true[true_idx + 1][0]:
-                    for i in range(add_val):
-                        new_true.append([add_key, 0, 0])
+                    if add_val < 0:
+                        for i in range(abs(add_val)):
+                            y_pre.insert(true_idx, [add_key, 0, 0])
+                    else: 
+                        for i in range(add_val):
+                            new_true.append([add_key, 0, 0])
+    print(len(new_true), len(y_pre))
+    print()
+    print(new_true)
+    print()
+    print(y_pre)
     return new_true
 
 def normalize(value, min_value=0, max_value=300):
@@ -135,9 +144,9 @@ def get_rmse_confmtrx(prediction_dict, true_keys,
 
     # rmse = mean_squared_error(matching_true, y_pre, squared= squared)
 
-    true_label = [0 if end[2] > 0 else 1 for end in matching_true]
-    pre_label = [0 for i in range(len(y_pre))]
-    conf_matrix = confusion_matrix(true_label, pre_label)
+    true_label = [1 if end[2] > 0 else 0 for end in matching_true]
+    pre_label = [1 if end[2] > 0 else 0 for end in y_pre]
+    conf_matrix = confusion_matrix(true_label, pre_label, labels= [1, 0])
 
     nrmse = normalize(rmse)
 
@@ -172,9 +181,9 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
 # cm_display.plot()
 # plt.show()
 
-# a = run_weights(list(range(1,31)), list(range(1,11)), "train")
+a = run_weights(list(range(1,31)), list(range(1,11)), "train")
 
-# print(max(a))
+print(max(a))
 
 
 

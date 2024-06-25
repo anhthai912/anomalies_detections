@@ -71,7 +71,7 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
     # tracking
     byte_track = sv.ByteTrack(frame_rate= fps, lost_track_buffer= 120)
 
-    text_file = open(result_path, 'w') 
+     
 
     vehicle_id = OrderedDict()
 
@@ -155,7 +155,7 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
     timer = end - start
     timer = round(timer, 2) 
 
-
+    text_file = open(result_path, 'w')
     for i in anomalies.items():
         text_file.write(f"{str(i)}\n")
 

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # for i in data:
     #     print(i)
     ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
-    text_file = open(ouput_path, 'w')
+    
     training_data = []
 
     # fr_skp = 1 #khang
@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
             training_data.append(w_data)
 
-    
+    text_file = open(ouput_path, 'w')
     for i in training_data:
         text_file.write(f"{str(i)}\n")
     text_file.write(f"\nBest score:\n {max(training_data)}\n")

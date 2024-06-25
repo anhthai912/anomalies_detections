@@ -41,6 +41,7 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
         video_info = sv.VideoInfo.from_video_path(video_path= video_path)
     
     except:
+        print(folder_path + f'\\{vid_no}.mp4')
         print("#####################\nICORRECT MODE\n**************************")
 
     try:

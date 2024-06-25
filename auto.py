@@ -1,28 +1,48 @@
 from obj_dect import run_main
 from mod import PATHS, CONFIG
 from get_eval import run_weights
-from multithreading import threader
+from multithreading import threader_main, threader_post
 
 
 data = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+iter_range = list(range(1,51))
+iter_min_time = list(range(1,201))
+errors = [0, 1, 2]
+life_time = list(range(15, 91, 15))
+frame_skip = [0, 1, 2, 3]
+mode = "train"
+weights = [iter_range, iter_min_time]
 # data = [93,95, 97]
 # data = [2, 9, 11, 14, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
 # for i in data:
 #     print(i)
 #     run_main(33, "train", show= True, confident= 0.5)
 if __name__ == '__main__':
-    iter_range = list(range(1,51))
-    iter_min_time = list(range(1,201))
-    errors = [0, 1 , 2]
-    life_time = list(range(15, 90, 15))
-    frame_skip = [0, 1, 2, 3, 4, 5]
-    mode = "train"
-    weights = [iter_range, iter_min_time]
+    # for i in data:
+    #     print(i)
+    ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
+    text_file = open(ouput_path, 'w')
+    training_data = []
 
-    for i in data:
-        print(i)
-        run_main(i, "train", show= False, confident= 0.5)
+    for fr_skp in frame_skip:
+        for error in errors:
+            for life in life_time:
 
-    result = threader(run_weights, iter_min_time, 1, weights, "train", 32, pre_path= "D:\\bi12year3\intern\gpu_slaves\\bau\\")
+                threader_main(data, mode, 5)
+                result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 40)
 
-    print(max(result))
+                result = max(result_list)
+                s4, [ano_range, min_time], rmse, cm = result
+
+                w_data = [s4, [error, life, fr_skp, ano_range, min_time], rmse, cm]
+
+                training_data.append(w_data)
+
+    
+    for i in training_data:
+        text_file.write(f"{str(i)}\n")
+    text_file.write(f"\nBest score:\n {max(training_data)}\n")
+    text_file.write(f"\nnumber of anomalies {str(len(training_data))}")
+
+    text_file.close()
+

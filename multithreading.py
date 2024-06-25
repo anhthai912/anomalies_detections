@@ -2,6 +2,7 @@
 import multiprocessing
 import os
 from get_eval import read_prediction_data, get_true_data, kms, get_rmse_confmtrx, PATHS, TRUE_VID, run_weights
+from mod import CONFIG
 from obj_dect import run_main
 
 def task_post(value_list,function, temp):
@@ -37,13 +38,17 @@ def threader_post(function, iterations:list, iter_index: int, weights, mode, bat
 
     return value_list
 
-def task_main(data_list, temp_args):
+def task_main(data_list, temp_args, weights):
     mode, conf, show = temp_args
+    if weights != None:
+        frame_skip, errors, life_time = weights
+    else: 
+        frame_skip, errors, life_time = CONFIG['frame_skip'], CONFIG['error'], CONFIG['life_time']
     for i in data_list:
-        run_main(i, mode, conf, show)
+        run_main(i, mode, conf, show, frame_skip, errors, life_time)
     
 
-def threader_main(data_list:list, mode, batch_sz:int= 16):
+def threader_main(data_list:list, mode, weights= None, batch_sz:int= 16):
     manager = multiprocessing.Manager()
     
     # Create a shared list
@@ -53,10 +58,11 @@ def threader_main(data_list:list, mode, batch_sz:int= 16):
     threads = []
     print("number of processes: ", len(batch))
 
+    
     for idx,i in enumerate(batch):
         temp_args = (mode, 0.5, False)
         # print(temp_args)
-        thread = multiprocessing.Process(target= task_main, args=(i, temp_args))
+        thread = multiprocessing.Process(target= task_main, args=(i, temp_args, weights))
         threads.append(thread)
         thread.start()
 
@@ -74,9 +80,10 @@ if __name__ == '__main__':
     # pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
     full_data = list(range(1,101))
 
+
     super_args = [iter_range1, iter_min_time1, mode1]
 
-    threader_main(full_data, "train", 25)
+    threader_main(full_data, "train", batch_sz= 25)
     print("***************************************")
 
     # result = threader_post(run_weights, iter_min_time1, 1, super_args, "train",4)

@@ -1,2 +1,1 @@
-
-
+error, life, fr_skp, ano_range, min_time

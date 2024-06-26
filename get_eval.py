@@ -103,7 +103,7 @@ def get_rmse_confmtrx(prediction_dict, y_true,
                     if i not in matched_true_indices:
                         time_diff = abs(pred[1] - true[1])
                         # print(time_diff)
-                        if time_diff <= 100 and time_diff < min_time_diff:
+                        if time_diff <= 10 and time_diff < min_time_diff:
                             min_time_diff = time_diff
                             best_match = i
                 if best_match is not None:

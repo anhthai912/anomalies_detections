@@ -33,13 +33,16 @@ CONFIG = {
 
 def check_dir(paths = PATHS["general"]):
     newpath = [
+    paths + '\\results',
     paths + '\\results_train',
-    paths + '\\results_test'
+    paths + '\\results_test',
+    paths + '\\output'
     ] 
-    for i in range(0, 2):
-        print(i)
+    for i in range(len(newpath)):
         if not os.path.exists(newpath[i]):
             os.makedirs(newpath[i])
+            print(newpath[i])
+check_dir()
 
 class CustomBoundingBoxAnnotator(sv.BoundingBoxAnnotator):
     def __init__(

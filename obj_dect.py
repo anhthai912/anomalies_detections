@@ -21,7 +21,7 @@ classes = [0, 1, 2, 3, 5, 7]
 
 model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
 
-def run_main(vid_no, mode: str = "train", confident= 0.5, show= False,
+def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= True,
              frame_skip= CONFIG['frame_skip'], 
              errors= CONFIG['error'], 
              life_time= CONFIG['life_time'], 
@@ -154,22 +154,27 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False,
 
     print(anomalies)
 
-    end = time.time()
-    timer = end - start
-    timer = round(timer, 2) 
+    if save == True:
+        end = time.time()
+        timer = end - start
+        timer = round(timer, 2) 
 
-    text_file = open(result_path, 'w')
-    for i in anomalies.items():
-        text_file.write(f"{str(i)}\n")
+        text_file = open(result_path, 'w')
+        for i in anomalies.items():
+            text_file.write(f"{str(i)}\n")
 
-    text_file.write(f"\nStart to end:{timer}")
-    text_file.write(f"\nnumber of anomalies {str(len(anomalies))}")
+        text_file.write(f"\nStart to end:{timer}")
+        text_file.write(f"\nnumber of anomalies {str(len(anomalies))}")
 
-    text_file.close()
-    print('done')
+        text_file.close()
+        print('done')
+    else:
+        pass
 
 # check_dir()
 # for i in range(1, 101):
-# run_main(33, "train", show= True)
+# run_main(33, "train", show= True, save= False,frame_skip= 3,
+#          life_time= 60,
+#          errors= 1,)
 
 

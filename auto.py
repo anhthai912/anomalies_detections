@@ -1,5 +1,5 @@
 from obj_dect import run_main
-from mod import PATHS, CONFIG
+from mod import PATHS, CONFIG, check_dir
 from get_eval import run_weights
 from multithreading import threader_main, threader_post
 import time
@@ -7,9 +7,9 @@ import time
 data = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
 iter_range = list(range(0,101, 5))
 error = 1
-iter_min_time = list(range(1,401, 10))
-life_time = list(range(1, 91, 15))
-frame_skip = [1, 2, 3, 4]
+iter_min_time = list(range(1,401, 5))
+life_time = list(range(15, 91, 15))
+# frame_skip = [1, 2, 3, 4]
 mode = "train"
 weights = [iter_range, iter_min_time]
 # data = [93,95, 97]

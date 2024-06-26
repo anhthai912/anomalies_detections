@@ -3,6 +3,8 @@ import os
 from sklearn.metrics import mean_squared_error, confusion_matrix, ConfusionMatrixDisplay
 import matplotlib.pyplot as plt
 import warnings
+import numpy as np
+from collections import defaultdict
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -58,6 +60,144 @@ def get_true_data(dataset_path):
 
     return sorted(evaluation)
 
+def normalize(value, min_value=0, max_value=300):
+    # Ensure value is within the given range
+    value = max(min_value, min(value, max_value))
+    
+    normalized_value = (value - min_value) / (max_value - min_value)
+    return normalized_value
+
+
+def get_rmse_confmtrx(prediction_dict, y_true,
+             anomaly_range= CONFIG['anomaly_range'], 
+             anomaly_min_time = CONFIG['anomaly_min_time']):
+    y_pre = get_prediction_data(prediction_dict, anomaly_range, anomaly_min_time)
+    valid_predictions = [pred for pred in y_pre if pred[1] != 0 or pred[2] != 0]
+    valid_true_anomalies = [true for true in y_true]
+
+    pred_dict = defaultdict(list)
+    true_dict = defaultdict(list)
+
+    for pred in valid_predictions:
+        pred_dict[pred[0]].append(pred)
+
+    for true in valid_true_anomalies:
+        true_dict[true[0]].append(true)
+
+    TP = 0
+    FP = 0
+    FN = 0
+    # matched_true_indices = set()
+    detection_times = []
+
+    for key in pred_dict:
+        matched_true_indices = set()
+        if key in true_dict:
+            # print("ehll",key)
+            for pred in pred_dict[key]:
+                best_match = None
+                min_time_diff = float('inf')
+                for i, true in enumerate(true_dict[key]):
+                    # print(true)
+                    # print(matched_true_indices)
+                    if i not in matched_true_indices:
+                        time_diff = abs(pred[1] - true[1])
+                        # print(time_diff)
+                        if time_diff <= 100 and time_diff < min_time_diff:
+                            min_time_diff = time_diff
+                            best_match = i
+                if best_match is not None:
+                    TP += 1
+                    matched_true_indices.add(best_match)
+                    detection_times.append(min_time_diff)
+                else:
+                    FP += 1
+            FN += len(true_dict[key]) - len(matched_true_indices)
+        else:
+            FP += len(pred_dict[key])
+
+    for key in true_dict:
+        if key not in pred_dict:
+            FN += len(true_dict[key])
+
+    # Compute Precision, Recall, and F1-score
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    recall = TP / (TP + FN) if (TP + FN) > 0 else 0
+    f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
+
+
+    rmse = np.sqrt(np.mean(np.square(detection_times))) if detection_times else 0
+    nrmse = normalize(rmse)
+
+    s4 = f1_score*(1-nrmse)
+    conf_matrix = [[TP, FP], [FN, 0]]
+    return s4, nrmse, conf_matrix
+
+
+def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
+    rmse_confmtrx_list = []
+    
+    const_pre = read_prediction_data(pre_path, mode, select)
+    
+    const_true = get_true_data(dataset_path)
+
+    for min_time_idx in iter_min_time:
+        for range_idx in iter_range:
+            rmse_confmtrx = get_rmse_confmtrx(prediction_dict= const_pre, y_true= const_true,
+                                    anomaly_range= range_idx,anomaly_min_time= min_time_idx)
+            rmse_confmtrx_list.append([rmse_confmtrx[0],[range_idx,min_time_idx], rmse_confmtrx[1], rmse_confmtrx[2]])
+    return rmse_confmtrx_list
+
+
+
+# const_pre = read_prediction_data("D:\\bi12year3\intern\gpu_slaves\\bau\\", "train", TRUE_VID)
+# const_true = get_true_data(PATHS['dataset'])
+# const_true_keys = kms(const_true)
+# cmtr = get_rmse_confmtrx(prediction_dict= const_pre, true_keys= (const_true, const_true_keys),
+#                          anomaly_range= 279,anomaly_min_time= 200)
+
+# print(cmtr)
+# cm_display = ConfusionMatrixDisplay(confusion_matrix = cmtr[2])
+# cm_display.plot()
+# plt.show()
+
+# a = run_weights(list(range(1,51, 10)), list(range(1,201, 10)), "train")
+
+# print(max(a))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def get_s4(nrmse, cm):
+    tp,fp = cm[0]
+    fn,tn = cm[1]
+
+    percision = tp/(tp + fp)
+    recall = tp/(tp + fn)
+
+    f1 = (2*percision*recall)/(percision + recall)
+
+    return f1*(1-nrmse)
+
+
 def kms(lists):
     temp_list = lists.copy()
     temp_list.append([99999, 0, 0])
@@ -105,108 +245,10 @@ def matching_result(y_pre, y_true, keys_true):
     # print()
     # print(new_true)
     # print()
+    # print(y_true)
+    # print()
     # print(y_pre)
     return new_true
-
-def normalize(value, min_value=0, max_value=300):
-    # Ensure value is within the given range
-    value = max(min_value, min(value, max_value))
-    
-    normalized_value = (value - min_value) / (max_value - min_value)
-    return normalized_value
-
-def get_s4(nrmse, cm):
-    tp,fp = cm[0]
-    fn,tn = cm[1]
-
-    percision = tp/(tp + fp)
-    recall = tp/(tp + fn)
-
-    f1 = (2*percision*recall)/(percision + recall)
-
-    return f1*(1-nrmse)
-
-
-def get_rmse_confmtrx(prediction_dict, true_keys,
-             anomaly_range= CONFIG['anomaly_range'], 
-             anomaly_min_time = CONFIG['anomaly_min_time'],
-             squared= False):
-    y_pre = get_prediction_data(prediction_dict, anomaly_range, anomaly_min_time)
-    # y_true = get_true_data(dataset_path)
-
-    matching_true = matching_result(y_pre, true_keys[0], true_keys[1])
-
-    start_true = [[start[0],start[1]] for start in matching_true]
-    start_pre = [[start[0],start[1]] for start in y_pre]
-    # start_true = [start[2] for start in matching_true]
-    # start_pre = [start[2] for start in y_pre]
-    rmse = mean_squared_error(start_true, start_pre, squared= squared)
-
-    # rmse = mean_squared_error(matching_true, y_pre, squared= squared)
-
-    true_label = [1 if end[2] > 0 else 0 for end in matching_true]
-    pre_label = [1 if end[2] > 0 else 0 for end in y_pre]
-    conf_matrix = confusion_matrix(true_label, pre_label, labels= [1, 0])
-
-    nrmse = normalize(rmse)
-
-    s4 = get_s4(nrmse, conf_matrix)
-    return s4, nrmse, conf_matrix
-
-
-def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
-    rmse_confmtrx_list = []
-    
-    const_pre = read_prediction_data(pre_path, mode, select)
-    
-    const_true = get_true_data(dataset_path)
-    # print(const_true)
-    const_true_keys = kms(const_true)
-
-    for min_time_idx in iter_min_time:
-        for range_idx in iter_range:
-            rmse_confmtrx = get_rmse_confmtrx(prediction_dict= const_pre, true_keys= (const_true, const_true_keys),
-                                    anomaly_range= range_idx,anomaly_min_time= min_time_idx)
-            rmse_confmtrx_list.append([rmse_confmtrx[0],[range_idx,min_time_idx], rmse_confmtrx[1], rmse_confmtrx[2]])
-    return rmse_confmtrx_list
-
-# const_pre = read_prediction_data("D:\\bi12year3\intern\gpu_slaves\\bau\\", "train", TRUE_VID)
-# const_true = get_true_data(PATHS['dataset'])
-# const_true_keys = kms(const_true)
-# cmtr = get_rmse_confmtrx(prediction_dict= const_pre, true_keys= (const_true, const_true_keys),
-#                          anomaly_range= 279,anomaly_min_time= 200)
-
-# print(cmtr)
-# cm_display = ConfusionMatrixDisplay(confusion_matrix = cmtr[2])
-# cm_display.plot()
-# plt.show()
-
-# a = run_weights(list(range(1,31)), list(range(1,11)), "train")
-
-# print(max(a))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -259,6 +301,31 @@ def matching_result_old(y_pre, y_true):
     return new_true
 
 
+def get_rmse_confmtrx_old_2(prediction_dict, true_keys,
+             anomaly_range= CONFIG['anomaly_range'], 
+             anomaly_min_time = CONFIG['anomaly_min_time'],
+             squared= False):
+    y_pre = get_prediction_data(prediction_dict, anomaly_range, anomaly_min_time)
+    # y_true = get_true_data(dataset_path)
+    matching_true = matching_result(y_pre, true_keys[0], true_keys[1])
+
+    start_true = [[start[0],start[1]] for start in matching_true]
+    start_pre = [[start[0],start[1]] for start in y_pre]
+    # start_true = [start[2] for start in matching_true]
+    # start_pre = [start[2] for start in y_pre]
+    rmse = mean_squared_error(start_true, start_pre, squared= squared)
+
+    # rmse = mean_squared_error(matching_true, y_pre, squared= squared)
+
+    true_label = [1 if end[2] > 0 else 0 for end in matching_true]
+    pre_label = [1 if end[2] > 0 else 0 for end in y_pre]
+    conf_matrix = confusion_matrix(true_label, pre_label, labels= [1, 0])
+
+    nrmse = normalize(rmse)
+
+    s4 = get_s4(nrmse, conf_matrix)
+    return s4, nrmse, conf_matrix
+
 def get_rmse_confmtrx_old(mode, predict_path= PATHS['general'], 
              dataset_path= PATHS['dataset'], 
              anomaly_range= CONFIG['anomaly_range'], 
@@ -301,6 +368,22 @@ def run_weights_old(iter_range: list, iter_min_time: list, mode, predicted_path=
             
             rmse_confmtrx_list.append([rmse_confmtrx[0],[range_idx,min_time_idx], rmse_confmtrx[1], rmse_confmtrx[2]])
     
+    return rmse_confmtrx_list
+
+def run_weights_old_2(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
+    rmse_confmtrx_list = []
+    
+    const_pre = read_prediction_data(pre_path, mode, select)
+    
+    const_true = get_true_data(dataset_path)
+    # print(const_true)
+    const_true_keys = kms(const_true)
+
+    for min_time_idx in iter_min_time:
+        for range_idx in iter_range:
+            rmse_confmtrx = get_rmse_confmtrx_old_2(prediction_dict= const_pre, true_keys= (const_true, const_true_keys),
+                                    anomaly_range= range_idx,anomaly_min_time= min_time_idx)
+            rmse_confmtrx_list.append([rmse_confmtrx[0],[range_idx,min_time_idx], rmse_confmtrx[1], rmse_confmtrx[2]])
     return rmse_confmtrx_list
 
 def get_best_weights_old(max_range, max_time, mode, txt_path= PATHS['general']):

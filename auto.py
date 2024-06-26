@@ -5,10 +5,10 @@ from multithreading import threader_main, threader_post
 import time
 
 data = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
-iter_range = list(range(1,51))
-iter_min_time = list(range(1,201))
-errors = [0, 1, 2]
-life_time = list(range(15, 91, 15))
+iter_range = list(range(0,101, 5))
+error = 1
+iter_min_time = list(range(1,401, 10))
+life_time = list(range(1, 91, 15))
 frame_skip = [1, 2, 3, 4]
 mode = "train"
 weights = [iter_range, iter_min_time]
@@ -20,41 +20,60 @@ weights = [iter_range, iter_min_time]
 if __name__ == '__main__':
     # for i in data:
     #     print(i)
-    start = time.time()
-    ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
     
+    # ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
+    iteration = 0
     training_data = []
 
     # fr_skp = 1 #khang
     # fr_skp = 2 #hminh
     fr_skp = 3 #me
     # fr_skp = 4 #bau
-    for error in errors:
-        for life in life_time:
-            weights_idx = [fr_skp, error, life]
-            threader_main(data, mode, weights_idx, 4)
-            result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 50)
+    beginer = time.time()
+    for life in life_time:
+        start = time.time()
+        weights_idx = [fr_skp, error, life]
+        threader_main(data, mode, weights_idx, 4)
+        result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 10)
 
-            result = max(result_list)
-            s4, [ano_range, min_time], rmse, cm = result
+        result = max(result_list)
+        print(result)
 
-            w_data = [s4, [error, life, fr_skp, ano_range, min_time], rmse, cm]
+        s4, [ano_range, min_time], rmse, cm = result
+        w_data = [s4, [error, life, fr_skp, ano_range, min_time], rmse, cm]
+        training_data.append(w_data)
 
-            training_data.append(w_data)
+        end = time.time()
+        timer = end - start
+        timer = round(timer, 2) 
 
-    end = time.time()
-    timer = end - start
-    timer = round(timer, 2) 
+        iteration += 1
+        ouput_path_i = PATHS["general"] + f'results\\{mode}_Output_{iteration}_weights.txt'
+        text_file = open(ouput_path_i, 'w')
+        for i in w_data:
+            text_file.write(f"{str(i)}\n")
+        text_file.write(f"\nStart to end:{timer}")
+        text_file.closed
 
-    text_file = open(ouput_path, 'w')
-    for i in training_data:
-        text_file.write(f"{str(i)}\n")
-    text_file.write(f"\nStart to end:{timer}")
-    text_file.write(f"\nBest score:\n {max(training_data)}\n")
-    text_file.write(f"\nnumber of anomalies {str(len(training_data))}")
-
-    text_file.close() 
 
     print("DONEZO@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    print("Best weight:", max(training_data))
+    if len(training_data) == 0:
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    else: 
+        ended = time.time()
+        full_time = ended - beginer
+        full_time = round(timer, 2)
+        # timer = end - start
+        # timer = round(timer, 2) 
+        ouput_path_full = PATHS["general"] + f'results\\{mode}_Output_best_weights.txt'
+        text_file_full = open(ouput_path_full, 'w')
+        for i in training_data:
+            text_file_full.write(f"{str(i)}\n")
+        text_file_full.write(f"\nStart to end:{full_time}")
+        text_file_full.write(f"\nBest score:\n {max(training_data)}\n")
+        text_file_full.write(f"\nBest weights: {max(training_data)[1]}\n")
+        text_file_full.write(f"\nnumber of iterations {str(len(training_data))}")
+
+        text_file_full.close() 
+        print("Best weight:", max(training_data))
 

@@ -27,6 +27,7 @@ CONFIG = {
     'frame_skip' : 2,
     'anomaly_range': 20,
     'anomaly_min_time': 30,
+    'nms': 0.25,
     'tracker_memo' : 1000,
 }
 
@@ -199,22 +200,24 @@ def read_anomalies(vid_no, mode, paths):
 
 
 def sort_ano(anomalies: dict, anomaly_range= CONFIG['anomaly_range'], anomaly_min_time= CONFIG['anomaly_min_time']):
+    # filtered_data = {k: v for k, v in anomalies.items() if (v[3][1] - v[2][1]) >= anomaly_min_time}
+    filtered_data = anomalies.copy()
     merged_data = {}
     visited_keys = set()
 
-    for key1, value1 in anomalies.items():
+    for key1, value1 in filtered_data.items():
         if key1 in visited_keys:
             continue
 
         coords1, trash1, start1, end1 = value1
         merged_start, merged_end = start1, end1
 
-        for key2, value2 in anomalies.items():
+        for key2, value2 in filtered_data.items():
             if key2 <= key1 or key2 in visited_keys:
                 continue
 
             coords2, trash2, start2, end2 = value2
-            if coor_check(coords1, coords2, errors= CONFIG['error'] + anomaly_range):
+            if coor_check(coords1, coords2, errors= anomaly_range):
                 merged_start = min(merged_start, start2)
                 merged_end = max(merged_end, end2)
                 visited_keys.add(key2)
@@ -222,9 +225,10 @@ def sort_ano(anomalies: dict, anomaly_range= CONFIG['anomaly_range'], anomaly_mi
         merged_data[key1] = [coords1, merged_start, merged_end]
         visited_keys.add(key1)
     
-    filtered_data = {k: v for k, v in merged_data.items() if (v[2][1] - v[1][1]) >= anomaly_min_time}
-    
-    return filtered_data
+    # return merged_data
+
+    filtered_data_2 = {k: v for k, v in merged_data.items() if (v[2][1] - v[1][1]) >= anomaly_min_time}
+    return filtered_data_2
 
 
 def get_ano_info(anomailes: dict, id):

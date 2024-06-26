@@ -3,14 +3,15 @@ from ultralytics import YOLO, RTDETR
 import os
 import torch
 import time
+import numpy as np
 import cv2
 
 video_path = 'C:\\Users\ADMIN\Desktop\AIC21-Track4-Anomaly-Detection_full\AIC21-Track4-Anomaly-Detection\\aic21-track4-train-data\\33.mp4'
 # để cái file path của vid vào đây, nhớ chỉnh \ --> \\
 video_info = sv.VideoInfo.from_video_path(video_path)
 model_path = os.path.dirname('D:\\bi12year3\intern\ictlab\lmao\model\\')
-# model = YOLO('yolov8m.pt')
-model = RTDETR(model_path + '\\rtdetr-l.pt')
+model = YOLO('yolov8n.pt')
+# model = RTDETR(model_path + '\\rtdetr-l.pt')
 
 # torch.cuda.set_device(0)
 
@@ -34,6 +35,18 @@ prev_frame_time = 0
   
 # used to record the time at which we processed current frame 
 new_frame_time = 0
+classes = [0, 1, 2, 3, 5, 7]
+
+def callback(frame: np.ndarray) -> sv.Detections:
+    result = model.predict(frame, classes= classes, conf= 0.5, device= 'cuda:0')[0]
+    return sv.Detections.from_ultralytics(result).with_nms(threshold= 0.25)
+
+slicer = sv.InferenceSlicer(
+    callback=callback,
+    overlap_filter_strategy=sv.OverlapFilter.NON_MAX_SUPPRESSION,
+)
+
+smoother = sv.DetectionsSmoother()
 
 for frame in frame_gen:
     # time when we finish processing for this frame 
@@ -46,9 +59,12 @@ for frame in frame_gen:
     fps2 = str(fps2)
 
 
-    result = model.predict(frame)[0]
+    result = model.predict(frame, classes= classes, conf= 0.5, device= 'cuda:0')[0]
     detections = sv.Detections.from_ultralytics(result)
+
+    # detections = slicer(frame)
     detections = byte_track.update_with_detections(detections= detections)
+    # detections = smoother.update_with_detections(detections)
 
     labels = [
                 # f"{tracker_id} x:{x} y:{y}"

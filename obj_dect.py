@@ -19,7 +19,9 @@ from mod import CustomBoundingBoxAnnotator, check_life, add_check, CONFIG, PATHS
 
 classes = [0, 1, 2, 3, 5, 7]
 
-def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
+model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
+
+def run_main(vid_no, mode: str = "train", confident= 0.5, show= False,
              frame_skip= CONFIG['frame_skip'], 
              errors= CONFIG['error'], 
              life_time= CONFIG['life_time'], 
@@ -50,9 +52,9 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
         print("\nNo cuda or incorrectly installed\n")
 
     # model = RTDETR(model_path + '\\rtdetr-l.pt')
-    model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
-    cuda0 = torch.device('cuda:0')
-    model.to(cuda0)
+    
+    # cuda0 = torch.device('cuda:0')
+    # model.to(cuda0)
 
     fps = video_info.fps
 
@@ -71,8 +73,8 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
     # tracking
     byte_track = sv.ByteTrack(frame_rate= fps, lost_track_buffer= 120)
 
-     
-
+    smother = sv.DetectionsSmoother()
+    
     vehicle_id = OrderedDict()
 
     anomalies = {}
@@ -90,9 +92,10 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
         # if timer > 0:
             vid_time = [frame_no, timer]
             
-            result = model.predict(frame, classes= classes, conf= confident)[0]
-            detections = sv.Detections.from_ultralytics(result)
+            result = model.predict(frame, classes= classes, conf= confident, device= 'cuda:0')[0]
+            detections = sv.Detections.from_ultralytics(result).with_nms(threshold= CONFIG['nms'])
             detections = byte_track.update_with_detections(detections= detections)
+            detections = smother.update_with_detections(detections)
             if frame_no % frame_skip == 0:#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 vehicle_id = add_check(detections, vehicle_id, anomalies, vid_time, tracker_memo, errors)
 
@@ -167,6 +170,6 @@ def run_main(vid_no, mode: str = "train", confident= 0.25, show= False,
 
 # check_dir()
 # for i in range(1, 101):
-#     run_main(i, "train", show= True)
-for i in range(-1):
-    print(i)
+# run_main(33, "train", show= True)
+
+

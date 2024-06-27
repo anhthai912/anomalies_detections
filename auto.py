@@ -53,7 +53,7 @@ if __name__ == '__main__':
         for i in w_data:
             text_file.write(f"{str(i)}\n")
         text_file.write(f"\nStart to end:{timer}")
-        text_file.closed
+        text_file.close()
 
 
     print("DONEZO@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")

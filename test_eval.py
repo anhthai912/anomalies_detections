@@ -1,28 +1,40 @@
+import numpy as np
+
+
+def normalize(value, min_value=0, max_value=300):
+    # Ensure value is within the given range
+    value = max(min_value, min(value, max_value))
+    
+    normalized_value = (value - min_value) / (max_value - min_value)
+    return normalized_value
+
 # Extract valid predictions
-predictions = [
-    [2, 500, 0], [9, 0, 0], [11, 0, 0], [14, 0, 0], [33, 2, 12], [33, 160, 894], [35, 0, 0], [49, 664, 894], [49, 805, 894],
-    [51, 0, 0], [63, 0, 0], [72, 106, 894], [73, 0, 0], [74, 294, 894], [83, 0, 0], [91, 635, 900], [93, 4, 796],
-    [93, 812, 892], [95, 89, 894], [95, 172, 894], [95, 178, 894], [95, 182, 291], [95, 242, 335], [95, 246, 258],
-    [95, 280, 295], [97, 18, 833]
-]
-true_anomalies = [
-    [2, 587, 894], [9, 0, 287], [11, 0, 888], [14, 475, 600], [33, 0, 90], [33, 165, 894], [35, 106, 185], [49, 422, 894],
-    [51, 431, 891], [63, 87, 853], [72, 87, 894], [73, 155, 894], [74, 293, 894], [83, 540, 892], [91, 602, 900],
-    [93, 0, 892], [95, 38, 894], [97, 0, 890]
-]
+# predictions = [
+#     [2, 500, 0], [9, 0, 0], [11, 0, 0], [14, 0, 0], [33, 2, 12], [33, 160, 894], [35, 0, 0], [49, 664, 894], [49, 805, 894],
+#     [51, 0, 0], [63, 0, 0], [72, 106, 894], [73, 0, 0], [74, 294, 894], [83, 0, 0], [91, 635, 900], [93, 4, 796],
+#     [93, 812, 892], [95, 89, 894], [95, 172, 894], [95, 178, 894], [95, 182, 291], [95, 242, 335], [95, 246, 258],
+#     [95, 280, 295], [97, 18, 833]
+# ]
+# true_anomalies = [
+#     [2, 587, 894], [9, 0, 287], [11, 0, 888], [14, 475, 600], [33, 0, 90], [33, 165, 894], [35, 106, 185], [49, 422, 894],
+#     [51, 431, 891], [63, 87, 853], [72, 87, 894], [73, 155, 894], [74, 293, 894], [83, 540, 892], [91, 602, 900],
+#     [93, 0, 892], [95, 38, 894], [97, 0, 890]
+# ]
+predictions = [[100, 0, 0], [90, 12, 203]]
+true_anomalies = [[100, 0, 0], [90, 0, 0]]
 t = True
 f = False
-check= {
-    2: t,
-    9: t,
-    11: t,
-    14: f,
-    33: t, 
-    33: t,
-    35: f,
+# check= {
+#     2: t,
+#     9: t,
+#     11: t,
+#     14: f,
+#     33: t, 
+#     33: t,
+#     35: f,
+# }
 
 
-}
 # predictions = [
 #     [2, 587, 894], [9, 0, 287], [11, 0, 888], [14, 475, 600], [33, 0, 90], [33, 165, 894], [35, 106, 185], [49, 422, 894],
 #     [51, 431, 891], [63, 87, 853], [72, 87, 894], [73, 155, 894], [74, 293, 894], [83, 540, 892], [91, 602, 900],
@@ -64,7 +76,7 @@ for key in pred_dict:
                 if i not in matched_true_indices:
                     time_diff = abs(pred[1] - true[1])
                     # print(time_diff)
-                    if time_diff <= 100 and time_diff < min_time_diff:
+                    if time_diff <= 10 and time_diff < min_time_diff:
                         min_time_diff = time_diff
                         best_match = i
             if best_match is not None:
@@ -86,6 +98,9 @@ precision = TP / (TP + FP) if (TP + FP) > 0 else 0
 recall = TP / (TP + FN) if (TP + FN) > 0 else 0
 f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
+print(TP, FP)
+print(FN, 0)
+print(f1_score)
 
 rmse = np.sqrt(np.mean(np.square(detection_times))) if detection_times else 0
 rmse = normalize(rmse)

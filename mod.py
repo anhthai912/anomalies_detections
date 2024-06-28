@@ -183,8 +183,12 @@ def read_anomalies(vid_no, mode, paths):
         print("#####################\nICORRECT MODE\n**************************")
 
     lines = text_file.readlines()
-    no_anomalies = int(lines[-1][20:])
-
+    try:
+        no_anomalies = int(lines[-1][20:])
+    except:
+        print()
+        print(vid_no)
+        print("\nvid_empty\n")
     ano = {}
 
     for i in range(no_anomalies):

@@ -103,7 +103,7 @@ def get_rmse_confmtrx(prediction_dict, y_true,
                     if i not in matched_true_indices:
                         time_diff = abs(pred[1] - true[1])
                         # print(time_diff)
-                        if time_diff <= 10 and time_diff < min_time_diff:
+                        if time_diff <= 100 and time_diff < min_time_diff:
                             min_time_diff = time_diff
                             best_match = i
                 if best_match is not None:
@@ -134,7 +134,7 @@ def get_rmse_confmtrx(prediction_dict, y_true,
     return s4, nrmse, conf_matrix
 
 
-def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
+def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= list(range(1, 101))):
     rmse_confmtrx_list = []
     
     const_pre = read_prediction_data(pre_path, mode, select)
@@ -160,10 +160,10 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
 # cm_display = ConfusionMatrixDisplay(confusion_matrix = cmtr[2])
 # cm_display.plot()
 # plt.show()
+if __name__ == '__main__':
+    a = run_weights(list(range(1,51, 10)), list(range(1,201, 10)), "train")
 
-# a = run_weights(list(range(1,51, 10)), list(range(1,201, 10)), "train")
-
-# print(max(a))
+    print(max(a))
 
 
 

@@ -21,9 +21,9 @@ if __name__ == '__main__':
 
     TRACKER = "bytetrack"
 
-    # fr_skp = 1 #khang
+    fr_skp = 1 #khang
     # fr_skp = 2 #hminh
-    fr_skp = 3 #me
+    # fr_skp = 3 #me
     # fr_skp = 4 #bau
     beginer = time.time()
     for life in life_time:

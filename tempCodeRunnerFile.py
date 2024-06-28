@@ -1,1 +1,2 @@
-error, life, fr_skp, ano_range, min_time
+!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        print(f"{vid_no} not saved !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

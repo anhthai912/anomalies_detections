@@ -1,3 +1,4 @@
+(1908, [[271, 72, 292, 93], 40, [13798, 460], [13817, 461]])
 
-Start to end:362.9
-number of anomalies 0
+Start to end:1233.25
+number of anomalies 1

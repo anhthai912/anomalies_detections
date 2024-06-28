@@ -1,7 +1,6 @@
 # import threading
 import multiprocessing
-import os
-from get_eval import read_prediction_data, get_true_data, kms, get_rmse_confmtrx, PATHS, TRUE_VID, run_weights
+from get_eval import PATHS,  run_weights
 from mod import CONFIG
 from obj_dect import run_main
 
@@ -52,28 +51,29 @@ def threader_post(function, iterations:list, iter_index: int, weights, mode, bat
     return value_list
 
 def task_main(data_list, temp_args, weights):
-    mode, conf, show = temp_args
+    mode, tracker = temp_args
     if weights != None:
         frame_skip, errors, life_time = weights
     else: 
         frame_skip, errors, life_time = CONFIG['frame_skip'], CONFIG['error'], CONFIG['life_time']
     for i in data_list:
-        run_main(i, mode, conf, show, frame_skip, errors, life_time)
+        run_main(vid_no= i, mode= mode, confident= 0.5, show= False, save= True, 
+                 frame_skip= frame_skip, errors= errors, life_time= life_time, tracker_n = tracker)
     
 
-def threader_main(data_list:list, mode, weights= None, batch_sz:int= 4):
+def threader_main(data_list:list, mode, tracker, weights= None, processes:int= 4):
     manager = multiprocessing.Manager()
     
     # Create a shared list
     value_list = manager.list()
 
-    batch = split_list(data_list, batch_sz)
+    batch = split_list(data_list, processes)
     threads = []
     print("number of processes: ", len(batch))
 
     
     for idx,i in enumerate(batch):
-        temp_args = (mode, 0.5, False)
+        temp_args = (mode, tracker)
         # print(temp_args)
         thread = multiprocessing.Process(target= task_main, args=(i, temp_args, weights))
         threads.append(thread)
@@ -91,10 +91,10 @@ if __name__ == '__main__':
     # pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
     full_data = list(range(1,101))
 
-
+    ttttracker = 'bytetrack'
     super_args = [iter_range1, iter_min_time1]
 
-    # threader_main(TRUE_VID, "train", batch_sz= 4)
+    threader_main([2,9], mode1, tracker= ttttracker, processes= 2)
     print("***************************************")
 
     result = threader_post(run_weights, iter_min_time1, 1, super_args, "train")

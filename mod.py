@@ -1,5 +1,5 @@
-from typing import List, Optional, Union
-from math import isclose
+from typing import Optional, Union
+# from math import isclose
 import cv2
 import numpy as np
 import supervision as sv
@@ -112,7 +112,7 @@ def custom_resolve_color(
         )
     for ano_id in anomalies.keys():
         if ano_id == track_idx:
-            print(ano_id)
+            # print(ano_id)
             return sv.Color.RED
     return get_color_by_index(color= color, idx= idx)
 
@@ -137,7 +137,7 @@ def add_check(detections: Detections, vehicle_id: dict, anomalies: dict, vid_tim
         for i in range(len(coors)):
             coors[i] = int(coors[i])
         if tracker_id not in vehicle_id:
-            vehi_cop[tracker_id]= [coors, 0, vid_time, vid_time]
+            vehi_cop[int(tracker_id)]= [coors, 0, vid_time, vid_time]
             if len(vehicle_id.items()) >= tracker_memo: #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 temp = vehi_cop.popitem(last= False)
                 if temp[0] in anomalies.keys():

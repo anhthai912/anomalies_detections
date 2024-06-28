@@ -1,29 +1,25 @@
-from obj_dect import run_main
-from mod import PATHS, CONFIG, check_dir
+# from obj_dect import run_main
+from mod import PATHS
 from get_eval import run_weights
 from multithreading import threader_main, threader_post
 import time
 
 data = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+# data = [2,9]
 iter_range = list(range(0,101, 5))
 error = 1
 iter_min_time = list(range(1,401, 5))
-life_time = list(range(15, 91, 15))
 # frame_skip = [1, 2, 3, 4]
+# life_time = list(range(15, 91, 15))#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+life_time = [15, 30, 45, 60, 75, 90]
 mode = "train"
 weights = [iter_range, iter_min_time]
-# data = [93,95, 97]
-# data = [2, 9, 11, 14, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
-# for i in data:
-#     print(i)
-#     run_main(33, "train", show= True, confident= 0.5)
+
 if __name__ == '__main__':
-    # for i in data:
-    #     print(i)
-    
-    # ouput_path = PATHS["general"] + f'results\\{mode}_Output_anomalies.txt'
     iteration = 0
     training_data = []
+
+    TRACKER = "bytetrack"
 
     # fr_skp = 1 #khang
     # fr_skp = 2 #hminh
@@ -33,7 +29,7 @@ if __name__ == '__main__':
     for life in life_time:
         start = time.time()
         weights_idx = [fr_skp, error, life]
-        threader_main(data, mode, weights_idx, 4)
+        threader_main(data_list= data, mode= mode, tracker= TRACKER, weights= weights_idx, processes= 4)
         result_list = threader_post(run_weights, iter_min_time, 1, weights, mode, 10)
 
         result = max(result_list)
@@ -64,7 +60,7 @@ if __name__ == '__main__':
     else: 
         ended = time.time()
         full_time = ended - beginer
-        full_time = round(timer, 2)
+        full_time = round(full_time, 2)
         # timer = end - start
         # timer = round(timer, 2) 
         ouput_path_full = PATHS["general"] + f'results\\{mode}_Output_best_weights.txt'

@@ -1,6 +1,6 @@
 # import threading
 import multiprocessing
-from get_eval import PATHS,  run_weights
+from get_eval import PATHS, TRUE_VID, run_weights
 from mod import CONFIG
 from obj_dect import run_main
 
@@ -85,19 +85,24 @@ def threader_main(data_list:list, mode, tracker, weights= None, processes:int= 4
     return value_list
 
 if __name__ == '__main__':
-    iter_range1 = list(range(1,31))
-    iter_min_time1 = list(range(1,18))
-    mode1 = "train"
+    iter_range1 = list(range(0,101, 5))
+    # error = 1
+    iter_min_time1 = list(range(1,401, 5))
+    mode1 = "test"
     # pre_path1 = "D:\\bi12year3\intern\gpu_slaves\\bau\\"
     full_data = list(range(1,101))
 
     ttttracker = 'bytetrack'
     super_args = [iter_range1, iter_min_time1]
 
-    threader_main([2,9], mode1, tracker= ttttracker, processes= 2)
+    frame_skip = 4
+    life_time = 15
+    weights = [frame_skip, 1, life_time]
+
+    threader_main(TRUE_VID, mode1, tracker= ttttracker, processes= 2, weights= weights)
     print("***************************************")
 
-    result = threader_post(run_weights, iter_min_time1, 1, super_args, "train")
+    result = threader_post(run_weights, iter_min_time1, 1, super_args, mode1)
 
     print(max(result))
 

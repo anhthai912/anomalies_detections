@@ -8,7 +8,9 @@ from collections import defaultdict
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-TRUE_VID = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+# TRUE_VID = [2, 9, 11, 14, 33, 35, 49, 51, 63, 72, 73, 74, 83, 91, 93, 95, 97]
+# TRUE_VID = [7, 9, 34, 35, 36, 40, 44, 48, 50, 70]
+TRUE_VID = [7, 40]
 # print(len(TRUE_VID))
 
 def read_prediction_data(main_path, mode, select= []):
@@ -102,8 +104,8 @@ def get_rmse_confmtrx(prediction_dict, y_true,
                     # print(matched_true_indices)
                     if i not in matched_true_indices:
                         time_diff = abs(pred[1] - true[1])
-                        # print(time_diff)
                         if time_diff <= 100 and time_diff < min_time_diff:
+                            # min_time_diff = time_diff
                             min_time_diff = time_diff
                             best_match = i
                 if best_match is not None:
@@ -125,7 +127,7 @@ def get_rmse_confmtrx(prediction_dict, y_true,
     recall = TP / (TP + FN) if (TP + FN) > 0 else 0
     f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
-
+    # detection_times = np.array(detection_times)
     rmse = np.sqrt(np.mean(np.square(detection_times))) if detection_times else 0
     nrmse = normalize(rmse)
 
@@ -134,7 +136,7 @@ def get_rmse_confmtrx(prediction_dict, y_true,
     return s4, nrmse, conf_matrix
 
 
-def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= list(range(1, 101))):
+def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['general'], dataset_path= PATHS['dataset'], select= TRUE_VID):
     rmse_confmtrx_list = []
     
     const_pre = read_prediction_data(pre_path, mode, select)
@@ -161,7 +163,7 @@ def run_weights(iter_range: list, iter_min_time: list, mode, pre_path= PATHS['ge
 # cm_display.plot()
 # plt.show()
 if __name__ == '__main__':
-    a = run_weights(list(range(1,51, 10)), list(range(1,201, 10)), "train")
+    a = run_weights(list(range(1,51, 10)), list(range(1,201, 10)), "test", select= TRUE_VID)
 
     print(max(a))
 

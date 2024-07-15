@@ -1,7 +1,6 @@
 import supervision as sv
 from ultralytics import YOLO, RTDETR
 import cv2
-import os
 from collections import OrderedDict
 import torch
 import numpy as np
@@ -23,14 +22,15 @@ from pathlib import Path
 classes = [0, 1, 2, 3, 5, 7]
 
 model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
-
+# model = RTDETR(PATHS['general'] + '\\models\\rtdetr-l.pt')
 
 def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= True,
              frame_skip= CONFIG['frame_skip'], 
              errors= CONFIG['error'], 
              life_time= CONFIG['life_time'], 
              tracker_memo= CONFIG['tracker_memo'],
-             tracker_n= 'bytetrack'):
+             tracker_n= 'bytetrack', 
+             skipper= 0):
     
     if mode == "train":
         print("*************************************************\nmode: TRAIN\n**********************************************\n")
@@ -94,10 +94,10 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
         thickness = sv.calculate_optimal_line_thickness(resolution_wh= video_info.resolution_wh)
         bounding_box_annotator = CustomBoundingBoxAnnotator(thickness= thickness)
 
-        # text_scale = sv.calculate_optimal_text_scale(resolution_wh= video_info.resolution_wh)
-        # text_scale = 2
+        text_scale = sv.calculate_optimal_text_scale(resolution_wh= video_info.resolution_wh)
+        
 
-        # label_annotator = sv.LabelAnnotator(text_scale= text_scale, text_thickness= thickness, text_padding= thickness)
+        label_annotator = sv.LabelAnnotator(text_scale= text_scale, text_padding= thickness)
 
 
     frame_generator = sv.get_video_frames_generator(video_path)
@@ -127,13 +127,14 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
             # print(f"vid no: {vid_no}")
             # print(frame_no)
             # print(timer)
-            if frame_no >= 0:
+            if frame_no >= skipper:
             # if timer > 0:
                 vid_time = [frame_no, timer]
                 
-                result = model.predict(frame, classes= classes, conf= confident, device= 'cuda:0', verbose = False)[0]
+                result = model.predict(frame, classes= classes, conf= confident, device= 'cuda:0', verbose = False, imgsz = (416, 800))[0]
                 detections = sv.Detections.from_ultralytics(result).with_nms(threshold= CONFIG['nms'])
-                
+                # detections = sv.Detections.from_ultralytics(result)
+
                 if detections is None or len(detections.xyxy) == 0:
                     tracker_output = np.empty((0, 8))
                 else:
@@ -172,7 +173,7 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
                         class_id=tracker_output[:, 6].astype(int), 
                         tracker_id=tracker_output[:, 4]
                     )
-                detections = smother.update_with_detections(detections)
+                # detections = smother.update_with_detections(detections)
                 # detections = Tracker_info(detections)
                 
                 if frame_no % frame_skip == 0:#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -180,17 +181,10 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
 
                 anomalies, vehicle_id = check_life(vehicle_id, anomalies, vid_time, life_time)
                 # print(anomalies)
-                frame_no += 1
+                
 
                 if show:
                     # TODO: fix the value error: label
-
-                    # labels = [
-                    #     # f"{tracker_id} x:{x} y:{y}"
-                    #     f'{tracker_id}'
-                    #     # f"{model.names[class_id]}:{tracker_id} x:{x} y:{y}"
-                    #     for tracker_id, class_id in zip(detections.tracker_id, detections.class_id)
-                    #     ]
         
                     annotated_frame = frame.copy()
                     # if len(tracker_output) != 0:
@@ -202,23 +196,48 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
                         custom_color_lookup= None
                     )   
 
-                    annotated_frame = cv2.putText(
-                        annotated_frame, f"frame: {frame_no} \\time: {timer}", 
-                        org= (20, 50), 
-                        fontFace= cv2.FONT_HERSHEY_COMPLEX,
-                        fontScale= 1, 
-                        color= (0, 255, 0), 
-                        thickness= 2)
+                    # if len(anomalies) == 0:
+                    lister = {}
+                    for i in vehicle_id.keys():
+                        if i in detections.tracker_id:
+                            lister[i] = vehicle_id[i]
+    
+                    try:
+                        labels = [
+                            f"{hio[1]}" for hio in lister.values()
+                            # f'{tracker_id}'
+                            # f"{model.names[class_id]}:{tracker_id} x:{x} y:{y}"
+                            # f"x1:{int(x)} y1:{int(y)} x2:{int(z)} y2:{int(k)}"
+                            # for tracker_id, [x, y, z, k] in zip(detections.tracker_id, detections.xyxy)
+                            # for tracker_id, [x,y,z,k] in zip(anomalies.keys(), anomalies.values())
+                            ]
+                        
+                        # annotated_frame = label_annotator.annotate(
+                        #     scene= annotated_frame,
+                        #     detections= detections,
+                        #     labels = labels
+                        # )
+                    except:
+                        pass
+
+                    # annotated_frame = cv2.putText(
+                    #     annotated_frame, f"frame: {frame_no} \\time: {timer}", 
+                    #     org= (20, 50), 
+                    #     fontFace= cv2.FONT_HERSHEY_COMPLEX,
+                    #     fontScale= 1, 
+                    #     color= (0, 255, 0), 
+                    #     thickness= 2)
                     
                     cv2.imshow(f"annotated_frame{vid_no}", annotated_frame)
                     if cv2.waitKey(1) == ord("q"):
                         break
             else:
                 pass
+            frame_no += 1
         if show:
             cv2.destroyAllWindows()
 
-    # bar.finish()
+    bar.finish()
 
 
     # print(anomalies)
@@ -243,9 +262,13 @@ def run_main(vid_no, mode: str = "train", confident= 0.5, show= False, save= Tru
         pass
 
 if __name__ == '__main__':
-    # run_main(9, "train", show= True, save= True,frame_skip= 4,
-    #          life_time= 30,
-    #          errors= 1, tracker_n= 'bytetrack')
+    skip  = 100
+    # model = YOLO(PATHS['general'] + '\\models\\yolov8l.pt')
+    # model = RTDETR(PATHS['general'] + '\\models\\rtdetr-l.pt')
+    model = YOLO(PATHS['general'] + '\\models\\yolov8n.pt')
+    run_main(93, "train", show= True, save= False,frame_skip= 4,
+             life_time= 15,
+             errors= 1, tracker_n= 'bytetrack', skipper = skip*30)
 
 
 

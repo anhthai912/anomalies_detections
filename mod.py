@@ -64,35 +64,37 @@ class CustomBoundingBoxAnnotator(sv.BoundingBoxAnnotator):
     ) -> ImageType:
         # detections_copy = detections.copy()
         for detection_idx in range(len(detections)):
-            x1,y1,x2,y2 = detections.xyxy[detection_idx].astype(int)
+            if detections.tracker_id[detection_idx] in anomalies.keys():
+                
+                x1,y1,x2,y2 = detections.xyxy[detection_idx].astype(int)
 
-            temp = None
-            try:
-                temp = detections.tracker_id[detection_idx]
-            except IndexError as e:
-                print("error at CustomBoundingBox class")
-                print("DETECTION: ",detections)
-                print("TRACKER_IDS",detections.tracker_id)
-                print("ERROR: ", e)
+                temp = None
+                try:
+                    temp = detections.tracker_id[detection_idx]
+                except IndexError as e:
+                    print("error at CustomBoundingBox class")
+                    print("DETECTION: ",detections)
+                    print("TRACKER_IDS",detections.tracker_id)
+                    print("ERROR: ", e)
 
-            color = custom_resolve_color(
-                color= self.color,
-                detections= detections,
-                detection_idx= detection_idx,
-                track_idx= temp,
-                anomalies= anomalies,
-                color_lookup= self.color_lookup
-                if custom_color_lookup is None
-                else custom_color_lookup,
-            )
-            
-            cv2.rectangle(
-                img= scene,
-                pt1= (x1, y1),
-                pt2= (x2, y2),
-                color= color.as_bgr(),
-                thickness= self.thickness
-            )
+                color = custom_resolve_color(
+                    color= self.color,
+                    detections= detections,
+                    detection_idx= detection_idx,
+                    track_idx= temp,
+                    anomalies= anomalies,
+                    color_lookup= self.color_lookup
+                    if custom_color_lookup is None
+                    else custom_color_lookup,
+                )
+                
+                cv2.rectangle(
+                    img= scene,
+                    pt1= (x1, y1),
+                    pt2= (x2, y2),
+                    color= color.as_bgr(),
+                    thickness= self.thickness
+                )
             
 
         return scene
@@ -123,7 +125,7 @@ def update_checker(tracker_id: dict, Id, new_coor, new_start, errors = CONFIG["e
     old_coor, life, old_start, end = tracker_id[Id]
     if coor_check(old_coor, new_coor, errors):#<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         life += 1
-        tracker_id.update({Id: [new_coor, life, new_start, end]})
+        tracker_id.update({Id: [new_coor, life, old_start, end]})
         return tracker_id
     else:
         life = 0
@@ -181,7 +183,7 @@ def read_anomalies(vid_no, mode, paths):
     except:
         print(file_path)
         print("#####################\nICORRECT MODE\n**************************")
-
+    # print(file_path)
     lines = text_file.readlines()
     try:
         no_anomalies = int(lines[-1][20:])
